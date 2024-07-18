@@ -70,3 +70,28 @@ export function uId(length = 6) {
 
   return result
 }
+
+export function isAPNG(bytes: Uint8Array) {
+  // Check if it's a valid PNG file
+  const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+  for (let i = 0; i < pngSignature.length; i++) {
+    if (bytes[i] !== pngSignature[i]) {
+      return false // Not a valid PNG file
+    }
+  }
+
+  // Search for 'acTL' chunk which indicates APNG
+  const acTLChunk = [0x61, 0x63, 0x54, 0x4c]
+  for (let i = 8; i < bytes.length - 8; i++) {
+    if (
+      bytes[i] === acTLChunk[0] &&
+      bytes[i + 1] === acTLChunk[1] &&
+      bytes[i + 2] === acTLChunk[2] &&
+      bytes[i + 3] === acTLChunk[3]
+    ) {
+      return true // Found 'acTL' chunk, it's an APNG file
+    }
+  }
+
+  return false // No 'acTL' chunk found, it's a normal PNG file
+}

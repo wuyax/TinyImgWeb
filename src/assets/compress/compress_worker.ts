@@ -1,6 +1,11 @@
 declare function importScripts(...urls: string[]): void
-importScripts('/libcaesium-wasm.js')
 
+// todo 根据部署环境修改路径
+self.Module = {}
+self.Module.locateFile = (path: string) => {
+  return `./wasm/${path}`
+}
+importScripts('./wasm/libcaesium-wasm.js')
 let wasmModule: any
 self.Module.onRuntimeInitialized = () => {
   wasmModule = self.Module

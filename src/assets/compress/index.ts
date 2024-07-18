@@ -161,7 +161,11 @@ export class WorkerManager {
         return new Proxy(worker, {
           set: (obj, props, value) => {
             if (props === 'idle' && value && this.taskQueue.length > 0) {
-              this.exec(this.taskQueue.shift() as Task, obj)
+              setTimeout(() => {
+                const pool = this.workerPool.find(pool => pool.idle)
+                if (!pool) return
+                this.exec(this.taskQueue.shift() as Task, pool)
+              }, 0)
             }
             return Reflect.set(obj, props, value)
           }
@@ -188,11 +192,12 @@ export class WorkerManager {
       if (pool) {
         pool.idle = false
         try {
-          reslove(await compress(file, config, pool.worker))
+          const reult = await compress(file, config, pool.worker)
           pool.idle = true
+          reslove(reult)
         } catch (error) {
-          reject(error)
           pool.idle = true
+          reject(error)
         }
       } else {
         this.queue(file, config, reslove, reject)
@@ -228,11 +233,13 @@ export class WorkerManager {
    */
   private async exec(task: Task, pool: Pool) {
     try {
-      task.reslove(await compress(task.file, task.config, pool.worker))
+      pool.idle = false
+      const result = await compress(task.file, task.config, pool.worker)
       pool.idle = true
+      task.reslove(result)
     } catch (error) {
-      task.reject(error)
       pool.idle = true
+      task.reject(error)
     }
   }
 
