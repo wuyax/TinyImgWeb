@@ -1,6 +1,4 @@
-<script setup lang="ts">
-import { reactive, ref } from 'vue'
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <header class="header">
@@ -14,7 +12,7 @@ import { reactive, ref } from 'vue'
             height="30"
             width="30"
             alt="logo" />
-          <span class="pl-3 font-serif text-xl font-bold">Compressor</span>
+          <span class="pl-3 font-serif text-xl font-bold">TinyIMG</span>
         </a>
       </div>
       <!-- navbar toggler -->
@@ -54,7 +52,7 @@ import { reactive, ref } from 'vue'
           <a
             href="#"
             class="block p-3 py-2 text-[15px] text-dark transition hover:text-primary md:px-2 lg:inline-blockink"
-            >About</a
+            >Features</a
           >
         </li>
         <li class="nav-item">
@@ -68,14 +66,7 @@ import { reactive, ref } from 'vue'
           <a
             href="#"
             class="block p-3 py-2 text-[15px] text-dark transition hover:text-primary md:px-2 lg:inline-block"
-            >Features</a
-          >
-        </li>
-        <li class="nav-item">
-          <a
-            href="#"
-            class="block p-3 py-2 text-[15px] text-dark transition hover:text-primary md:px-2 lg:inline-block"
-            >How It Works</a
+            >About</a
           >
         </li>
         <li class="nav-item">
@@ -86,11 +77,11 @@ import { reactive, ref } from 'vue'
           >
         </li>
         <li class="nav-item mt-3.5 lg:hidden">
-          <a class="btn btn-white btn-sm border-border" href="signin.html">Sing Up Now</a>
+          <a class="btn btn-white btn-sm border-border" href="#">Sing Up Now</a>
         </li>
       </ul>
       <div class="order-1 ml-auto hidden items-center md:order-2 md:ml-0 lg:flex">
-        <a class="btn btn-white btn-sm" href="signin.html">Sing Up Now</a>
+        <a class="btn btn-white btn-sm" href="#">Sing Up Now</a>
       </div>
     </nav>
   </header>

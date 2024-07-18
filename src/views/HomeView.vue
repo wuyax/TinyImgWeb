@@ -1,64 +1,105 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, shallowRef, type Ref } from 'vue'
-import { compress, WorkerManager } from '@/assets/compress/index'
+import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
+import { WorkerManager } from '@/assets/compress/index'
+import Result from '@/components/Result.vue'
+import { uId } from '@/assets/compress/utils'
 
-// import Worker from '../assets/compress/compress_worker.ts?worker'
-const manager = new WorkerManager(3)
-
-const b64Img = shallowRef('')
-const ratio = ref('--')
-
-function fileChange(event: any) {
-  console.log(Array.from(event.target.files))
-  console.log(event.target.files.length)
-  const file = event.target.files[0]
-  if (file) {
-    // compressFile(file)
-    const sourthFileSize = file.size
-    compress(file)
-      .then(imgData => {
-        b64Img.value = imgData.toBase64()
-        const size = imgData.size()
-        ratio.value = (((sourthFileSize - size) / sourthFileSize) * 100).toFixed(2)
-        console.log(sourthFileSize, size)
-
-        /* const file = imgData.toFile()
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const base64String = e.target.result;
-          b64Img.value = base64String;
-        };
-        reader.readAsDataURL(file); */
-      })
-      .catch(errCode => {
-        console.log(errCode)
-      })
-  }
+enum Statu {
+  compressing,
+  success,
+  error
 }
+
+interface ImgInfo {
+  id: any
+  name: string
+  size: number
+  type: string
+  resultSize: number
+  statu: Statu
+  data: any
+}
+
+const manager = new WorkerManager(3)
+// @ts-ignore
+window.manager = manager
+
+const uploadFiles = ref<ImgInfo[]>([])
 
 const fileInput: Ref<HTMLInputElement | undefined> = ref()
 const dropzone: Ref<HTMLDivElement | undefined> = ref()
 const events = ['dragenter', 'dragover', 'dragleave', 'drop']
-function preventDefaults(e) {
+function preventDefaults(e: any) {
   e.preventDefault()
   e.stopPropagation()
 }
 
-function handleDrop(e) {
-  const dt = e.dataTransfer
-  const files = dt.files
-  console.log(files)
+function fileChange(event: any) {
+  const files = event.target.files
+  handleFiles(files)
+}
 
-  Array.from(files as File[]).map(file => {
-    manager.compress(file).then(imgData => {
-      b64Img.value = imgData.toBase64()
+function handleDrop(e: any) {
+  const files = e.dataTransfer.files
+  // 检查文件类型
+  /* for (const file of files) {
+    if (!file.type.startsWith('image/')) {
+      // 仅允许图片类型
+      alert('只允许上传图片文件')
+      return
+    }
+  } */
+  handleFiles(files)
+}
+
+function c(file: File, id: string) {
+  manager
+    .compress(file)
+    .then(imgData => {
+      const data = imgData.toBase64()
       const size = imgData.size()
 
-      console.log(size, b64Img.value)
+      // console.log(size, b64Img.value)
+      // ({resultSize: size, data, id })
+      const findFile = uploadFiles.value.find(f => {
+        return f.id === id
+      })
+      if (findFile) {
+        findFile.resultSize = size
+        findFile.data = data
+        findFile.statu = Statu.success
+      }
     })
-  })
+    .catch(errCode => {
+      console.log('文件压缩发生错误了', errCode, id)
+      const findFile = uploadFiles.value.find(f => {
+        return f.id === id
+      })
+      if (findFile) {
+        findFile.statu = Statu.error
+      }
+    })
+}
+function handleFiles(files: any) {
+  const fileInfos = Array.from(files as File[])
+    .filter(file => file.type.startsWith('image/'))
+    .map(file => {
+      // console.log(file)
+      const id = uId()
+      c(file, id)
 
-  // handleFiles(files)
+      return {
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        resultSize: 0,
+        statu: Statu.compressing,
+        data: ''
+      }
+    })
+
+  uploadFiles.value.push(...fileInfos)
 }
 onMounted(() => {
   events.forEach(eventName => {
@@ -83,29 +124,32 @@ onBeforeUnmount(() => {
         <div class="row items-center flex flex-wrap">
           <div class="w-1/2">
             <h1 class="banner-title text-5xl font-serif">
-              Scale design & dev operations with Avocode Enterprise
+              Smart <span class="line-through">WebP</span>, PNG and JPEG Compression for Faster
+              Websites
             </h1>
             <p class="mt-6">
-              A fully integrated suite of authentication & authoriz products, Stytch’s platform
-              removes the headache of.
+              Tailored solutions for website owners, developers, and designers, ensuring optimal
+              website performance for every project. Discover the advantages of faster loading times
+              with our image optimization tools.
             </p>
-            <a
-              class="btn btn-white mt-8 inline-block h-[52px] border px-8 py-2 text-sm font-medium leading-[36px] transition-all duration-200"
-              href="#"
-              >Download</a
-            >
           </div>
-          <div class="w-1/2 h-96 p-10">
-            <div
-              ref="dropzone"
-              class="w-full h-full flex flex-col justify-center items-center p-6 border-2 border-dashed border-gray-400 rounded-lg bg-orange-100 bg-opacity-25 backdrop-blur-sm text-center">
-              <input type="file" ref="fileInput" class="hidden" multiple @change="fileChange" />
-              <p class="text-gray-500">拖动文件到此处或点击上传</p>
+          <div class="w-1/2 h-96 p-5">
+            <div class="h-full p-5 rounded-lg bg-orange-100 bg-opacity-25 backdrop-blur-sm">
               <button
-                id="uploadButton"
-                class="inline-block h-14 border px-8 py-2 text-sm font-medium rounded-full bg-white mt-4"
+                ref="dropzone"
+                class="w-full h-full flex flex-col justify-center items-center p-6 border-2 border-dashed border-blue-500 border-opacity-50 text-center rounded-lg hover:bg-orange-100 hover:bg-opacity-25 hover:backdrop-blur-sm"
                 @click.stop="openFileSelect">
-                选择文件
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref="fileInput"
+                  class="hidden"
+                  multiple
+                  @change="fileChange" />
+                <p class=" flex flex-col">
+                  <span class="text-lg font-bold pb-1">Drop your images here!</span>
+                  <span class="text-gray-500">Convert images automatically</span>
+                </p>
               </button>
             </div>
           </div>
@@ -119,13 +163,19 @@ onBeforeUnmount(() => {
           alt="" />
       </div>
     </section>
-    <!-- <div class="pt-4">
-      <input type="file" accept=".png, .jpeg, .jpg, .webp" @change="fileChange" />
-    </div> -->
-    <!-- <div class="min-h-screen flex items-center justify-center bg-gray-100"></div> -->
-    <div>
-      <img id="img" :src="b64Img" alt="" />
-    </div>
-    <div>压缩率: {{ ratio }} %</div>
+    <!-- <section>
+      <div class="container">
+        <button class="border px-2" @click="save">保存图片</button>
+        <img id="img" :src="b64Img" alt="" />
+        <div>压缩率: {{ ratio }} %</div>
+      </div>
+    </section> -->
+    <section>
+      <ul class="container divide-y divide-slate-200 p-3">
+        <li class="first:pt-0 last:pb-0 py-3" v-for="data in uploadFiles">
+          <Result :data="data"></Result>
+        </li>
+      </ul>
+    </section>
   </main>
 </template>

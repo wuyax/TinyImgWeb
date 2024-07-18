@@ -9,6 +9,8 @@ import HelloWorld from './components/HelloWorld.vue'
   <SiteHeader></SiteHeader>
 
   <RouterView />
+
+  <footer class="w-full h-16"></footer>
 </template>
 
 <style scoped>
