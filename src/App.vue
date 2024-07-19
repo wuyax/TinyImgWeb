@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView } from 'vue-router'
 import SiteHeader from '@/components/SiteHeader.vue'
-
-import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
@@ -14,8 +12,6 @@ import HelloWorld from './components/HelloWorld.vue'
 </template>
 
 <style scoped>
- 
-
 .logo {
   display: block;
   margin: 0 auto 2rem;
@@ -47,12 +43,9 @@ nav a:first-of-type {
 }
 
 @media (min-width: 1024px) {
- 
   .logo {
     margin: 0 2rem 0 0;
   }
-
- 
 
   nav {
     text-align: left;
