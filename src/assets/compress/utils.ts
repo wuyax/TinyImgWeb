@@ -95,3 +95,39 @@ export function isAPNG(bytes: Uint8Array) {
 
   return false // No 'acTL' chunk found, it's a normal PNG file
 }
+
+export async function fileToBlob(file: File): Promise<Blob> {
+  return new Promise((reslove, rejcet) => {
+    if (!file) {
+      rejcet('no file')
+      return
+    }
+    const reader = new FileReader()
+
+    reader.onload = function (e) {
+      if (!e.target || !e.target.result) return
+      const blob = new Blob([new Uint8Array(e.target.result as ArrayBuffer)], { type: file.type })
+      reslove(blob)
+    }
+
+    reader.readAsArrayBuffer(file)
+  })
+}
+
+export async function fileToB64(file: File) {
+  return new Promise((reslove, rejcet) => {
+    if (!file) {
+      rejcet('no file')
+      return
+    }
+    const reader = new FileReader()
+
+    reader.onload = function (e) {
+      // @ts-ignore
+      const base64Image = e.target.result
+      reslove(base64Image)
+    }
+
+    reader.readAsDataURL(file)
+  })
+}

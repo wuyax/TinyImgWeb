@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { saveAs } from 'file-saver'
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 import { WorkerManager } from '@/assets/compress/index'
 import Result from '@/components/Result.vue'
-import { uId } from '@/assets/compress/utils'
+import { uId, fileToBlob, fileToB64 } from '@/assets/compress/utils'
+import { BlobWriter, ZipWriter, Data64URIReader, BlobReader } from '@zip.js/zip.js'
 
 enum Statu {
   compressing,
@@ -55,7 +57,7 @@ function handleDrop(e: any) {
 function c(file: File, id: string) {
   manager
     .compress(file)
-    .then(imgData => {
+    .then(async imgData => {
       const data = imgData.toBase64()
       const size = imgData.size()
 
@@ -65,17 +67,24 @@ function c(file: File, id: string) {
         return f.id === id
       })
       if (findFile) {
-        findFile.resultSize = size
-        findFile.data = data
-        findFile.statu = Statu.success
+        if (size > findFile.size) {
+          findFile.resultSize = findFile.size
+          findFile.data = await fileToB64(file)
+          findFile.statu = Statu.success
+        } else {
+          findFile.resultSize = size
+          findFile.data = data
+          findFile.statu = Statu.success
+        }
       }
     })
-    .catch(errCode => {
+    .catch(async errCode => {
       console.log('文件压缩发生错误了', errCode, id)
       const findFile = uploadFiles.value.find(f => {
         return f.id === id
       })
       if (findFile) {
+        findFile.data = await fileToBlob(file)
         findFile.statu = Statu.error
       }
     })
@@ -115,6 +124,28 @@ function openFileSelect() {
 onBeforeUnmount(() => {
   manager.kill()
 })
+
+function clearAll() {
+  uploadFiles.value = []
+}
+
+async function downloadAll() {
+  const zipFileWriter = new BlobWriter()
+  const zipWriter = new ZipWriter(zipFileWriter)
+  for (let i = 0; i < uploadFiles.value.length; i++) {
+    const img = uploadFiles.value[i]
+    if (img.statu === Statu.success) {
+      // 压缩成功
+      const imgReader = new Data64URIReader(img.data)
+      await zipWriter.add(img.name, imgReader)
+    } else {
+      const rawFile = new BlobReader(img.data)
+      await zipWriter.add(img.name, rawFile)
+    }
+  }
+  const data = await zipWriter.close()
+  saveAs(data, 'download.zip')
+}
 </script>
 
 <template>
@@ -146,7 +177,7 @@ onBeforeUnmount(() => {
                   class="hidden"
                   multiple
                   @change="fileChange" />
-                <p class=" flex flex-col">
+                <p class="flex flex-col">
                   <span class="text-lg font-bold pb-1">Drop your images here!</span>
                   <span class="text-gray-500">Convert images automatically</span>
                 </p>
@@ -170,6 +201,20 @@ onBeforeUnmount(() => {
         <div>压缩率: {{ ratio }} %</div>
       </div>
     </section> -->
+    <section v-if="uploadFiles.length > 1" class="pb-3">
+      <div class="container flex justify-end">
+        <button
+          class="bg-red-500 hover:bg-red-600 focus:outline-none focus:ring focus:ring-red-300 active:bg-red-700 px-5 py-2 text-sm leading-5 rounded-full font-semibold text-white mr-3"
+          @click="clearAll">
+          清除全部
+        </button>
+        <button
+          class="bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring focus:ring-emerald-300 active:bg-emerald-700 px-5 py-2 text-sm leading-5 rounded-full font-semibold text-white"
+          @click="downloadAll">
+          下载全部
+        </button>
+      </div>
+    </section>
     <section>
       <ul class="container divide-y divide-slate-200 p-3">
         <li class="first:pt-0 last:pb-0 py-3" v-for="data in uploadFiles">
