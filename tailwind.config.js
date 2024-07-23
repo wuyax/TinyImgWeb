@@ -1,12 +1,16 @@
 /** @type {import('tailwindcss').Config} */
+import daisyui from 'daisyui'
 export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     container: {
       center: true,
-      padding: "0.75rem",
+      padding: '0.75rem'
     },
-    extend: {},
+    extend: {}
   },
-  plugins: [],
+  plugins: [daisyui],
+  daisyui: {
+    themes: ['light', 'dark']
+  }
 }

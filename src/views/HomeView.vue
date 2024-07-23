@@ -22,6 +22,41 @@ interface ImgInfo {
   data: any
 }
 
+const dataStruct = [
+  {
+    id: '123',
+    folder: false,
+    name: 'test.png',
+    size: 1233,
+    type: 'image/png',
+    resultSize: 1100,
+    statu: Statu.compressing,
+    data: ''
+  },
+  {
+    id: '123',
+    folder: true,
+    name: 'test.zip',
+    size: 1233,
+    type: 'application/zip',
+    resultSize: 1100,
+    statu: Statu.compressing,
+    data: '',
+    children: [
+      {
+        id: '1234',
+        folder: false,
+        name: 'test.png',
+        size: 1233,
+        type: 'image/png',
+        resultSize: 1100,
+        statu: Statu.compressing,
+        data: ''
+      }
+    ]
+  }
+]
+
 const manager = new WorkerManager(3)
 // @ts-ignore
 window.manager = manager
@@ -54,7 +89,7 @@ function handleDrop(e: any) {
   handleFiles(files)
 }
 
-function c(file: File, id: string) {
+function compress(file: File, id: string) {
   manager
     .compress(file)
     .then(async imgData => {
@@ -90,12 +125,13 @@ function c(file: File, id: string) {
     })
 }
 function handleFiles(files: any) {
+  console.log(files)
   const fileInfos = Array.from(files as File[])
     .filter(file => file.type.startsWith('image/'))
     .map(file => {
       // console.log(file)
       const id = uId()
-      c(file, id)
+      compress(file, id)
 
       return {
         id,
@@ -216,7 +252,7 @@ async function downloadAll() {
       </div>
     </section>
     <section>
-      <ul class="container divide-y divide-slate-200 p-3">
+      <ul class="container divide-y divide-slate-200 dark:divide-stone-700 p-3">
         <li class="first:pt-0 last:pb-0 py-3" v-for="data in uploadFiles">
           <Result :data="data"></Result>
         </li>

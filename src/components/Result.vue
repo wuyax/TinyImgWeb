@@ -63,7 +63,7 @@ const ratio = computed(() => {
         <div class="">{{ formatFileSize(data.resultSize) }}</div>
       </div>
       <button
-        class="bg-[#f2fafa] text-[#039c93] flex items-center h-8 px-3 rounded-e-lg hover:bg-[#cdebe9] disabled:bg-gray-100 disabled:text-gray-400"
+        class="bg-[#f2fafa] text-[#039c93] flex items-center h-8 px-3 rounded-e-lg hover:bg-[#cdebe9] disabled:bg-gray-100 disabled:text-gray-400 transition-all duration-150"
         :disabled="data.statu === 0 || data.statu === 2"
         @click="save">
         <div class="w-3 mr-2">

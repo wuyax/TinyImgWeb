@@ -1,3 +1,5 @@
+import { BlobReader, ZipReader, type Entry, type GetEntriesOptions } from "@zip.js/zip.js"
+
 export const support = ['jpg', 'jpeg', 'png', 'webp']
 
 /**
@@ -130,4 +132,14 @@ export async function fileToB64(file: File) {
 
     reader.readAsDataURL(file)
   })
+}
+
+/**
+ * 解析压缩文件
+ * @param file
+ * @param options
+ * @returns
+ */
+export function unZip(file: File, options: GetEntriesOptions): Promise<Entry[]> {
+  return new ZipReader(new BlobReader(file)).getEntries(options)
 }
