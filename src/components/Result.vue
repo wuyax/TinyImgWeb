@@ -4,10 +4,15 @@ import { saveAs } from 'file-saver'
 import IconsLoading from '@/components/icons/IconLoading.vue'
 import IconImg from '@/components/icons/IconImg.vue'
 import IconWave from '@/components/icons/IconWave.vue'
-const props = defineProps<{ data: any }>()
+import type { ImgInfo } from '@/components/index.d'
+const props = defineProps<{ data: ImgInfo }>()
 
 function save() {
-  saveAs(props.data.data, props.data.name)
+  if (props.data.resultSize >= props.data.rawSize) {
+    saveAs(props.data.rawData, props.data.name)
+  } else {
+    saveAs(props.data.resultData, props.data.name)
+  }
 }
 
 function formatFileSize(bytes: number) {
@@ -21,26 +26,26 @@ function formatFileSize(bytes: number) {
 }
 
 const type = computed(() => {
-  return props.data.type.split('/').pop().toUpperCase()
+  // @ts-ignore
+  return props.data?.type.split('/').pop().toUpperCase()
 })
 const ratio = computed(() => {
-  if (!props.data.resultSize) {
-    return '0'
-  }
-  return (((props.data.size - props.data.resultSize) / props.data.size) * -100).toFixed(2)
+  const { rawSize, resultSize } = props.data
+  if (!resultSize) return '0'
+  return (((rawSize - resultSize) / rawSize) * -100).toFixed(2)
 })
 </script>
 
 <template>
   <div class="w-full flex items-center">
     <div class="w-12 h-12 rounded-md bg-teal-50 mr-5 overflow-hidden flex">
-      <div v-if="data.statu === 0" class="m-auto w-6 h-6">
+      <div v-if="data.status === 0" class="m-auto w-6 h-6">
         <IconsLoading class="w-full h-full"></IconsLoading>
       </div>
-      <div v-else-if="data.statu === 2" class="m-auto w-6 h-6 text-red-500">
+      <div v-else-if="data.status === 2" class="m-auto w-6 h-6 text-red-500">
         <IconImg class="w-full h-full"></IconImg>
       </div>
-      <img v-else class="object-cover w-full h-full" :src="data.data" alt="" />
+      <img v-else class="object-cover w-full h-full" :src="data.thumb" alt="" />
     </div>
 
     <div>
@@ -49,11 +54,11 @@ const ratio = computed(() => {
         <div class="w-14 text-center text-[#039c93] bg-[#f2fafa] rounded-sm px-2 mr-2 font-bold">
           {{ type }}
         </div>
-        <div>{{ formatFileSize(data.size) }}</div>
+        <div>{{ formatFileSize(data.rawSize) }}</div>
       </div>
     </div>
     <div class="ml-auto flex items-center">
-      <div v-if="data.statu === 0" class="w-6 h-6 text-emerald-400 mr-2">
+      <div v-if="data.status === 0" class="w-6 h-6 text-emerald-400 mr-2">
         <IconWave class="w-full h-full"></IconWave>
       </div>
       <div v-else class="flex flex-col justify-end items-end mr-2">
@@ -64,7 +69,7 @@ const ratio = computed(() => {
       </div>
       <button
         class="bg-[#f2fafa] text-[#039c93] flex items-center h-8 px-3 rounded-e-lg hover:bg-[#cdebe9] disabled:bg-gray-100 disabled:text-gray-400 transition-all duration-150"
-        :disabled="data.statu === 0 || data.statu === 2"
+        :disabled="data.status === 0 || data.status === 2"
         @click="save">
         <div class="w-3 mr-2">
           <svg

@@ -52,7 +52,7 @@
           <a
             href="#"
             class="block p-3 py-2 text-[15px] text-dark transition hover:text-primary md:px-2 lg:inline-blockink"
-            >Features</a
+            >Price</a
           >
         </li>
         <li class="nav-item">
