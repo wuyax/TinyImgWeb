@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { saveAs } from 'file-saver'
 import IconsLoading from '@/components/icons/IconLoading.vue'
 import IconImg from '@/components/icons/IconImg.vue'
 import IconWave from '@/components/icons/IconWave.vue'
 import type { ImgInfo } from '@/components/index.d'
+import { u82img } from '@/assets/compress/utils'
+
 const props = defineProps<{ data: ImgInfo }>()
 
 function save() {
@@ -34,6 +36,20 @@ const ratio = computed(() => {
   if (!resultSize) return '0'
   return (((rawSize - resultSize) / rawSize) * -100).toFixed(2)
 })
+
+const preview = ref('')
+watch(
+  () => {
+    return props.data.status
+  },
+  value => {
+    if (value === 1) {
+      u82img(props.data.resultData).then(img => {
+        preview.value = img
+      })
+    }
+  }
+)
 </script>
 
 <template>
@@ -45,7 +61,7 @@ const ratio = computed(() => {
       <div v-else-if="data.status === 2" class="m-auto w-6 h-6 text-red-500">
         <IconImg class="w-full h-full"></IconImg>
       </div>
-      <img v-else class="object-cover w-full h-full" :src="data.thumb" alt="" />
+      <img v-else class="object-cover w-full h-full" :src="preview" :alt="data.name" />
     </div>
 
     <div>
