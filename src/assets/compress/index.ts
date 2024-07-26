@@ -17,12 +17,15 @@ function loadWorker(): Promise<Worker> {
       reject('load worker timeout!')
     }, 10 * 1000)
 
-    worker.addEventListener('message', event => {
+    function messageListener(event: MessageEvent<any>) {
       if (event.data.type === 'initialized') {
         resolve(worker)
         clearTimeout(timer)
+        worker.removeEventListener('message', messageListener)
       }
-    })
+    }
+
+    worker.addEventListener('message', messageListener)
   })
 }
 
@@ -51,7 +54,7 @@ function compressSingle(file: FB, config: CompressConfig, worker: Worker): Promi
       if (type === 'compressed') {
         if (status === 1) {
           if (msgId === id) {
-            reslove(new ImageData(data))
+            reslove(new ImageData(new Uint8Array(data)))
           }
         } else {
           reject(errorCode)

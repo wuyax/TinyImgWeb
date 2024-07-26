@@ -45,7 +45,13 @@ function compress(data: CompressData) {
 
   if (status === 1) {
     const compressedData = new Uint8Array(self.Module.HEAPU8.buffer, dataPtr, dataLen)
-    self.postMessage({ type: 'compressed', id, status, data: compressedData })
+
+    // creat a Transferable Objects
+    const bufferCopy = new ArrayBuffer(compressedData.byteLength)
+    const copyView = new Uint8Array(bufferCopy)
+    copyView.set(compressedData)
+    // @ts-ignore
+    self.postMessage({ type: 'compressed', id, status, data: bufferCopy }, [bufferCopy])
   } else {
     self.postMessage({ type: 'compressed', id, status, errorCode })
   }
