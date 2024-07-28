@@ -1,4 +1,4 @@
-import { BlobReader, ZipReader, type Entry, type GetEntriesOptions } from "@zip.js/zip.js"
+import { BlobReader, ZipReader, type Entry, type GetEntriesOptions } from '@zip.js/zip.js'
 
 export const support = ['jpg', 'jpeg', 'png', 'webp']
 
@@ -116,7 +116,7 @@ export async function fileToBlob(file: File): Promise<Blob> {
   })
 }
 
-export async function fileToB64(file: File) {
+export async function fileToB64(file: File): Promise<string> {
   return new Promise((reslove, rejcet) => {
     if (!file) {
       rejcet('no file')
@@ -126,7 +126,7 @@ export async function fileToB64(file: File) {
 
     reader.onload = function (e) {
       // @ts-ignore
-      const base64Image = e.target.result
+      const base64Image = e.target.result as string
       reslove(base64Image)
     }
 

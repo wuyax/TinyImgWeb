@@ -4,8 +4,8 @@ import { saveAs } from 'file-saver'
 import IconsLoading from '@/components/icons/IconLoading.vue'
 import IconImg from '@/components/icons/IconImg.vue'
 import IconWave from '@/components/icons/IconWave.vue'
-import type { ImgInfo } from '@/components/index.d'
-import { u82img } from '@/assets/compress/utils'
+import { Status, type ImgInfo } from '@/components/index.d'
+import { u82img, fileToB64 } from '@/assets/compress/utils'
 
 const props = defineProps<{ data: ImgInfo }>()
 
@@ -50,11 +50,20 @@ watch(
     }
   }
 )
+const rawPreview = ref('')
+const myModal = ref()
+async function showDiff() {
+  if (props.data.status !== Status.success) return
+  if (!rawPreview.value) {
+    rawPreview.value = await fileToB64(props.data.rawData)
+  }
+  myModal.value?.showModal()
+}
 </script>
 
 <template>
   <div class="w-full flex items-center">
-    <div class="w-12 h-12 rounded-md bg-teal-50 mr-5 overflow-hidden flex">
+    <div class="w-12 h-12 rounded-md bg-teal-50 mr-5 overflow-hidden flex cursor-pointer" @click="showDiff">
       <div v-if="data.status === 0" class="m-auto w-6 h-6">
         <IconsLoading class="w-full h-full"></IconsLoading>
       </div>
@@ -105,6 +114,23 @@ watch(
         <div class="w-10 font-bold">{{ type }}</div>
       </button>
     </div>
+    <dialog ref="myModal" class="modal">
+      <div class="modal-box max-w-5xl">
+        <h3 class="text-lg font-bold pb-2">结果对比</h3>
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">✕</button>
+        </form>
+        <div class="diff aspect-[16/9]">
+          <div class="diff-item-1">
+            <img alt="daisy" :src="preview" />
+          </div>
+          <div class="diff-item-2">
+            <img alt="daisy" :src="rawPreview" />
+          </div>
+          <div class="diff-resizer"></div>
+        </div>
+      </div>
+    </dialog>
   </div>
 </template>
 
