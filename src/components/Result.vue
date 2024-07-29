@@ -13,7 +13,9 @@ function save() {
   if (props.data.resultSize >= props.data.rawSize) {
     saveAs(props.data.rawData, props.data.name)
   } else {
-    saveAs(props.data.resultData, props.data.name)
+    u82img(props.data.resultData).then(img => {
+      saveAs(img, props.data.name)
+    })
   }
 }
 
@@ -63,7 +65,9 @@ async function showDiff() {
 
 <template>
   <div class="w-full flex items-center">
-    <div class="w-12 h-12 rounded-md bg-teal-50 mr-5 overflow-hidden flex cursor-pointer" @click="showDiff">
+    <div
+      class="w-12 h-12 rounded-md bg-teal-50 mr-5 overflow-hidden flex cursor-pointer"
+      @click="showDiff">
       <div v-if="data.status === 0" class="m-auto w-6 h-6">
         <IconsLoading class="w-full h-full"></IconsLoading>
       </div>
@@ -116,7 +120,7 @@ async function showDiff() {
     </div>
     <dialog ref="myModal" class="modal">
       <div class="modal-box max-w-5xl">
-        <h3 class="text-lg font-bold pb-2">结果对比</h3>
+        <h3 class="text-lg font-bold pb-2">Comparison results</h3>
         <form method="dialog">
           <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">✕</button>
         </form>
