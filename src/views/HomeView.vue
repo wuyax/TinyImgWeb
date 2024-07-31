@@ -80,7 +80,7 @@ async function downloadAll() {
         </button>
       </div>
     </section>
-    <section>
+    <section class="pb-10">
       <ul class="container divide-y divide-slate-200 dark:divide-stone-700 p-3">
         <li class="first:pt-0 last:pb-0 py-3" v-for="data in store.images">
           <Result :data="data"></Result>

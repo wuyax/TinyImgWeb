@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver'
 import IconsLoading from '@/components/icons/IconLoading.vue'
 import IconImg from '@/components/icons/IconImg.vue'
 import IconWave from '@/components/icons/IconWave.vue'
+import IconDownload from '@/components/icons/IconDownload.vue'
 import { Status, type ImgInfo } from '@/components/index.d'
 import { u82img, fileToB64 } from '@/assets/compress/utils'
 
@@ -66,7 +67,7 @@ async function showDiff() {
 <template>
   <div class="w-full flex items-center">
     <div
-      class="w-12 h-12 rounded-md bg-teal-50 mr-5 overflow-hidden flex cursor-pointer"
+      class="w-12 h-12 rounded-md bg-teal-50 mr-5 overflow-hidden flex cursor-pointer hover:opacity-90 active:opacity-70"
       @click="showDiff">
       <div v-if="data.status === 0" class="m-auto w-6 h-6">
         <IconsLoading class="w-full h-full"></IconsLoading>
@@ -101,19 +102,7 @@ async function showDiff() {
         :disabled="data.status === 0 || data.status === 2"
         @click="save">
         <div class="w-3 mr-2">
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            data-prefix="fas"
-            data-icon="file-arrow-down"
-            class="svg-inline--fa fa-file-arrow-down fa-flip-horizontal"
-            role="img"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 384 512">
-            <path
-              fill="currentColor"
-              d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM216 232V334.1l31-31c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-72 72c-9.4 9.4-24.6 9.4-33.9 0l-72-72c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l31 31V232c0-13.3 10.7-24 24-24s24 10.7 24 24z"></path>
-          </svg>
+          <IconDownload />
         </div>
         <div class="w-10 font-bold">{{ type }}</div>
       </button>
@@ -125,10 +114,11 @@ async function showDiff() {
           <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">✕</button>
         </form>
         <div class="diff aspect-[16/9]">
-          <div class="diff-item-1">
+          <div
+            class="diff-item-1 after:shadow-md after:bg-no-repeat after:bg-cover after:bg-[url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9ImN1cnJlbnRDb2xvciIgZD0iTTkuNzEgNi4yOWExIDEgMCAwIDAtMS40MiAwbC01IDVhMSAxIDAgMCAwIDAgMS40Mmw1IDVhMSAxIDAgMCAwIDEuNDIgMCAxIDEgMCAwIDAgMC0xLjQyTDUuNDEgMTJsNC4zLTQuMjlhMSAxIDAgMCAwIDAtMS40Mm0xMSA1LTUtNWExIDEgMCAwIDAtMS40MiAxLjQybDQuMyA0LjI5LTQuMyA0LjI5YTEgMSAwIDAgMCAwIDEuNDIgMSAxIDAgMCAwIDEuNDIgMGw1LTVhMSAxIDAgMCAwIDAtMS40MiIvPjwvc3ZnPg==)]">
             <img alt="daisy" :src="preview" />
           </div>
-          <div class="diff-item-2">
+          <div class="diff-item-2 shadow-md">
             <img alt="daisy" :src="rawPreview" />
           </div>
           <div class="diff-resizer"></div>

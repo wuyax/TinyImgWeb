@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import SiteHeader from '@/components/SiteHeader.vue'
+import IconWasm from '@/components/icons/IconWasm.vue'
 </script>
 
 <template>
@@ -8,7 +9,12 @@ import SiteHeader from '@/components/SiteHeader.vue'
 
   <RouterView />
 
-  <footer class="w-full h-16"></footer>
+  <footer class="w-full h-10 text-center fixed bottom-0 bg-white flex justify-center items-center">
+    <span class="pr-2">It's free. From your friend</span>
+    <a class="underline underline-offset-4" href="https://github.com/wuyax" target="_blank">@wuyax</a>
+    <span class="pl-2">powered by</span>
+    <a class="flex items-center underline underline-offset-4" href="https://webassembly.org/" target="_blank"><IconWasm class="ml-2 mr-1"/> WASM</a>
+  </footer>
 </template>
 
 <style scoped>
