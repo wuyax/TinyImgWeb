@@ -3,7 +3,6 @@ import { BlobWriter, ZipWriter, Uint8ArrayReader, BlobReader } from '@zip.js/zip
 import { saveAs } from 'file-saver'
 import { Status } from '@/components/index.d'
 import { useImageStore } from '@/stores/image'
-import Result from '@/components/Result.vue'
 import DropBox from '@/components/DropBox.vue'
 import Tree from '@/components/Tree/Index.vue'
 
@@ -11,6 +10,7 @@ const store = useImageStore()
 const { clearImages } = store
 
 async function downloadAll() {
+  return
   const zipFileWriter = new BlobWriter()
   const zipWriter = new ZipWriter(zipFileWriter)
   for (let i = 0; i < store.images.length; i++) {
@@ -65,20 +65,20 @@ async function downloadAll() {
         <div>压缩率: {{ ratio }} %</div>
       </div>
     </section> -->
-    <section v-if="store.images.length > 1" class="pb-3">
+    <section v-if="store.images.length >= 1" class="pb-3">
       <div class="container flex justify-end">
         <button
-          class="bg-red-500 hover:bg-red-600 focus:outline-none focus:ring focus:ring-red-300 active:bg-red-700 px-5 py-2 text-sm leading-5 rounded-full font-semibold text-white mr-3 disabled:bg-gray-400"
+          class="bg-red-500 hover:bg-red-600 focus:outline-none focus:ring focus:ring-red-300 active:bg-red-700 px-5 py-2 text-sm leading-5 rounded-full font-semibold text-white disabled:bg-gray-400"
           :disabled="!store.finish"
           @click="clearImages">
           清除全部
         </button>
-        <button
+        <!-- <button
           class="bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring focus:ring-emerald-300 active:bg-emerald-700 px-5 py-2 text-sm leading-5 rounded-full font-semibold text-white disabled:bg-gray-400"
           :disabled="!store.finish"
           @click="downloadAll">
           下载全部
-        </button>
+        </button> -->
       </div>
     </section>
     <!-- <section class="pb-10">

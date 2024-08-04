@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { mergeWith, isArray } from 'lodash-es'
+import { clear } from '@/components/zip-manager'
 import { Status, type ImgInfo, type TreeNode } from '@/components/index.d'
 
 function findAndUpdateNodeByUid(
@@ -157,6 +158,7 @@ export const useImageStore = defineStore('image', () => {
   // 清空所有图片
   function clearImages() {
     images.value = []
+    clear()
   }
 
   // 获取指定状态的图片

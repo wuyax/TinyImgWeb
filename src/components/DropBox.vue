@@ -78,7 +78,7 @@ async function handleZip(files: FileList) {
   const fileHandleingList: Promise<AddedFile>[] = Array.from(files).map(file => {
     return new Promise(async (reslove, reject) => {
       if (file.type.startsWith('image/')) {
-        console.log('image')
+        // console.log('image')
         let defaultZip = zips.get(tacit)
         if (!defaultZip) return
         let dir = defaultZip.getChildByName('Downloads')
@@ -89,16 +89,16 @@ async function handleZip(files: FileList) {
         try {
           // @ts-ignore
           const entry = await dir.addFile(file)
-          console.log(entry)
+          // console.log(entry)
           reslove({ rfn: tacit, id: entry.id })
         } catch (error) {
           // todo 文件添加失败！
           console.log(error)
           reject(false)
         }
-        console.log('defaultZip', defaultZip)
+        // console.log('defaultZip', defaultZip)
         // @ts-ignore
-        const zipEntries = defaultZip.entries
+        // const zipEntries = defaultZip.entries
         // transformEntries(zipEntries, tacit)
       } else if (file.type === 'application/zip') {
         // zip file
@@ -113,7 +113,7 @@ async function handleZip(files: FileList) {
           return
         }
         // @ts-ignore
-        const zipEntries = await zipFilesystem.importBlob(file)
+        await zipFilesystem.importBlob(file)
         // transformEntries(zipEntries, fileName)
         reslove({ rfn: fileName, id: 0 })
       } else {
@@ -122,7 +122,7 @@ async function handleZip(files: FileList) {
       }
     })
   })
-  console.log(fileHandleingList)
+  // console.log(fileHandleingList)
   return Promise.allSettled(fileHandleingList)
 }
 
@@ -155,7 +155,6 @@ function transformEntries(zipEntries: any, rootFileName: string) {
       const isOSFile = ['__MACOSX', '.DS_Store'].includes(item.name)
       return !isOSFile && (!item.name || !item.name?.startsWith('.'))
     })
-  console.log(fileList)
   const tree = buildTree(fileList)
   return tree
 }
@@ -195,7 +194,6 @@ function getFileFromZipById(addedFiles: AddedFile[]) {
       // zip package
       // @ts-ignore
       const imgEntryInZip = zip.entries.filter(entry => {
-        console.log(entry.name)
         return (
           !entry.directory &&
           !['__MACOSX', '.DS_Store'].includes(entry.name) &&
@@ -216,7 +214,7 @@ function getFileFromZipById(addedFiles: AddedFile[]) {
             console.log(error)
           })
       })
-      console.log(imgEntryInZip)
+      // console.log(imgEntryInZip)
     }
   })
 }
@@ -224,7 +222,7 @@ function getFileFromZipById(addedFiles: AddedFile[]) {
 async function handleFiles(files: FileList) {
   try {
     const addedFiles = await handleZip(files)
-    console.log(addedFiles)
+    // console.log(addedFiles)
     const rfns = getUniqueRfnValues(addedFiles)
 
     rfns.forEach(rfn => {
@@ -232,7 +230,7 @@ async function handleFiles(files: FileList) {
       if (!zip) return
       // @ts-ignore
       const tree = transformEntries(zip.entries, rfn)
-      console.log(tree)
+      // console.log(tree)
       addImages(tree[0])
     })
     const fileList = addedFiles.map(({ value }) => {
@@ -312,7 +310,7 @@ onBeforeUnmount(() => {
       @click.stop="openFileSelect">
       <input
         type="file"
-        accept="image/*"
+        accept="image/*,.zip"
         ref="fileInput"
         class="hidden"
         multiple
