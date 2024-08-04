@@ -5,7 +5,7 @@ interface CompressConfig {
   keepMetadata: boolean
 }
 
-type FB = File | Blob
+type FB = File | Blob | Uint8Array
 
 function loadWorker(): Promise<Worker> {
   return new Promise((resolve, reject) => {
@@ -71,6 +71,18 @@ function compressSingle(file: FB, config: CompressConfig, worker: Worker): Promi
       worker.removeEventListener('error', onError)
     }
     worker.addEventListener('message', onMessage)
+
+    const isUnit8Array = file instanceof Uint8Array
+    if (isUnit8Array) {
+      worker.postMessage({
+        id: msgId,
+        type: 'compress',
+        input: file,
+        quality: config.quality,
+        keepMetadata: +config.keepMetadata
+      })
+      return
+    }
 
     const reader = new FileReader()
     reader.onload = function (event) {

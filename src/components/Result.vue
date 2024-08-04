@@ -5,6 +5,7 @@ import IconsLoading from '@/components/icons/IconLoading.vue'
 import IconImg from '@/components/icons/IconImg.vue'
 import IconWave from '@/components/icons/IconWave.vue'
 import IconDownload from '@/components/icons/IconDownload.vue'
+import IconUnknown from '@/components/icons/IconUnknown.vue'
 import { Status, type ImgInfo } from '@/components/index.d'
 import { u82img, fileToB64 } from '@/assets/compress/utils'
 
@@ -58,7 +59,11 @@ const myModal = ref()
 async function showDiff() {
   if (props.data.status !== Status.success) return
   if (!rawPreview.value) {
-    rawPreview.value = await fileToB64(props.data.rawData)
+    if (props.data.rawData instanceof Uint8Array) {
+      rawPreview.value = await u82img(props.data.rawData)
+    } else {
+      rawPreview.value = await fileToB64(props.data.rawData)
+    }
   }
   myModal.value?.showModal()
 }
@@ -72,6 +77,9 @@ async function showDiff() {
       <div v-if="data.status === 0" class="m-auto w-6 h-6">
         <IconsLoading class="w-full h-full"></IconsLoading>
       </div>
+      <div v-else-if="data.status === 3" class="m-auto w-6 h-6 text-gray-400">
+        <IconUnknown class="w-full h-full"></IconUnknown>
+      </div>
       <div v-else-if="data.status === 2" class="m-auto w-6 h-6 text-red-500">
         <IconImg class="w-full h-full"></IconImg>
       </div>
@@ -81,13 +89,14 @@ async function showDiff() {
     <div>
       <div class="font-bold pb-1">{{ data.name }}</div>
       <div class="flex items-center">
-        <div class="w-14 text-center text-[#039c93] bg-[#f2fafa] rounded-sm px-2 mr-2 font-bold">
+        <div
+          class="min-w-14 text-center text-[#039c93] bg-[#f2fafa] rounded-sm px-2 mr-2 font-bold">
           {{ type }}
         </div>
         <div>{{ formatFileSize(data.rawSize) }}</div>
       </div>
     </div>
-    <div class="ml-auto flex items-center">
+    <div v-if="data.status !== 3" class="ml-auto flex items-center">
       <div v-if="data.status === 0" class="w-6 h-6 text-emerald-400 mr-2">
         <IconWave class="w-full h-full"></IconWave>
       </div>
@@ -99,12 +108,12 @@ async function showDiff() {
       </div>
       <button
         class="bg-[#f2fafa] text-[#039c93] flex items-center h-8 px-3 rounded-e-lg hover:bg-[#cdebe9] disabled:bg-gray-100 disabled:text-gray-400 transition-all duration-150"
-        :disabled="data.status === 0 || data.status === 2"
+        :disabled="data.status !== 1"
         @click="save">
         <div class="w-3 mr-2">
           <IconDownload />
         </div>
-        <div class="w-10 font-bold">{{ type }}</div>
+        <div class="min-w-10 font-bold">{{ type }}</div>
       </button>
     </div>
     <dialog ref="myModal" class="modal">

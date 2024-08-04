@@ -1,11 +1,12 @@
 export enum Status {
   compressing,
   success,
-  error
+  error,
+  unsupport
 }
 
 export interface ImgInfo {
-  id: any
+  uid: any
   name: string
   type: string
   status: Status
@@ -14,4 +15,19 @@ export interface ImgInfo {
   resultSize: number
   rawData: File
   resultData: any
+}
+
+interface TreeNode {
+  readonly id: number
+  readonly pid: number
+  readonly uid: string
+  rfn: string
+  name: string
+  directory: boolean
+  status: Status
+  rawSize: number
+  resultSize: number
+  rawData: File
+  resultData: any
+  children?: TreeNode[]
 }

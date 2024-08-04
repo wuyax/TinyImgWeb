@@ -1,112 +1,25 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
-/* import {
-  filesystemService,
-  downloadService,
-  i18nService,
-  storageService,
-  zipService,
-  shareTargetService,
-  fileHandlersService,
-  stylesheetService,
-  environmentService,
-  keyboardService,
-  themeService,
-  documentService,
-  windowService,
-  musicService
-} from '@/services/index.js'
-import { constants, features, getUIState, getEventHandlers } from '@/business/index.js'
-import { getMessages } from '@/messages/index.js'
-const {
-  getCommonFeatures,
-  getEntriesFeatures,
-  getFoldersFeatures,
-  getSelectedFolderFeatures,
-  getHighlightedEntriesFeatures,
-  getFilesystemFeatures,
-  getDownloadsFeatures,
-  getClipboardFeatures,
-  getOptionsFeatures,
-  getAppFeatures,
-  getMiscFeatures
-} = features
-const messages = getMessages({ i18nService })
-const apiFilesystem = zipService.createZipFileSystem()
-const { root } = apiFilesystem
-const rootZipFilename = messages.ROOT_ZIP_FILENAME
-console.log(root, rootZipFilename) */
-/* const {
-    initSelectedFolderFeatures,
-    openPromptCreateFolder,
-    createFolder,
-    closePromptCreateFolder,
-    addFiles,
-    dropFiles,
-    closeChooseAction,
-    importZipFile,
-    openPromptExportZip,
-    exportZip,
-    paste,
-    closePromptExportZip,
-    closePromptImportPassword,
-    showAddFilesPicker,
-    showImportZipFilePicker,
-    onSelectedFolderKeyDown
-  } = getSelectedFolderFeatures({
-    disabledPaste,
-    disabledExportZip,
-    zipFilesystem,
-    selectedFolder,
-    rootZipFilename,
-    clipboardData,
-    dialogs,
-    setHighlightedIds,
-    setClipboardData,
-    setDialogs,
-    setClickedButtonName,
-    refreshSelectedFolder,
-    highlightEntries,
-    saveZipFile,
-    getOptions,
-    openDisplayError,
-    filesystemService,
-    fileHandlersService,
-    shareTargetService,
-    modifierKeyPressed,
-    constants
-  }); */
-
-// legacy logic
-
 import { WorkerManager } from '@/assets/compress/index'
-import { uId } from '@/assets/compress/utils'
-
+import { uId, support } from '@/assets/compress/utils'
 import { useImageStore } from '@/stores/image'
-import { Status } from './index.d'
+import { Status, type TreeNode } from './index.d'
+import { getMimeType } from '@zip.js/zip.js'
+import zips, { tacit, createZipFileSystem } from './zip-manager'
 
 const { addImages, updateImage } = useImageStore()
 
 const fileInput: Ref<HTMLInputElement | undefined> = ref()
-
 const dropzone: Ref<HTMLDivElement | undefined> = ref()
 const events = ['dragenter', 'dragover', 'dragleave', 'drop']
 
-const manager = new WorkerManager(3)
 function preventDefaults(e: any) {
   e.preventDefault()
   e.stopPropagation()
 }
-function handleDrop(e: any) {
-  const files = e.dataTransfer.files
-  // 检查文件类型
-  /* for (const file of files) {
-    if (!file.type.startsWith('image/')) {
-      // 仅允许图片类型
-      alert('只允许上传图片文件')
-      return
-    }
-  } */
+function handleDrop(e: DragEvent) {
+  const files = e.dataTransfer?.files
+  if (!files) return
   handleFiles(files)
 }
 
@@ -117,29 +30,239 @@ onMounted(() => {
 
   dropzone.value?.addEventListener('drop', handleDrop, false)
 })
-onBeforeUnmount(() => {
-  manager.kill()
-})
 
 function openFileSelect() {
   fileInput.value?.click()
 }
 
-function fileChange(event: any) {
-  const files = event.target.files
+function fileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (!files) return
   handleFiles(files)
 }
 
-function handleFiles(files: any) {
-  const fileInfos = Array.from(files as File[])
+function buildUid(rfn, id) {
+  return `${rfn}_*_${id}`
+}
+
+function buildTree(data: TreeNode[]): TreeNode[] {
+  const nodeMap: Record<number, TreeNode> = {}
+  const roots: TreeNode[] = []
+
+  // 首先,创建一个以id为键的节点映射
+  data.forEach(node => {
+    nodeMap[node.id] = { ...node, children: [] }
+  })
+
+  // 然后,遍历所有节点,将它们添加到父节点的children数组中,或者添加到根数组中
+  data.forEach(node => {
+    if (node.pid === 0) {
+      roots.push(nodeMap[node.id])
+    } else {
+      const parent = nodeMap[node.pid]
+      if (parent) {
+        parent.children?.push(nodeMap[node.id])
+      }
+    }
+  })
+
+  return roots
+}
+
+interface AddedFile {
+  rfn: string
+  id: number
+}
+async function handleZip(files: FileList) {
+  const fileHandleingList: Promise<AddedFile>[] = Array.from(files).map(file => {
+    return new Promise(async (reslove, reject) => {
+      if (file.type.startsWith('image/')) {
+        console.log('image')
+        let defaultZip = zips.get(tacit)
+        if (!defaultZip) return
+        let dir = defaultZip.getChildByName('Downloads')
+
+        if (!dir) {
+          dir = defaultZip.addDirectory('Downloads')
+        }
+        try {
+          // @ts-ignore
+          const entry = await dir.addFile(file)
+          console.log(entry)
+          reslove({ rfn: tacit, id: entry.id })
+        } catch (error) {
+          // todo 文件添加失败！
+          console.log(error)
+          reject(false)
+        }
+        console.log('defaultZip', defaultZip)
+        // @ts-ignore
+        const zipEntries = defaultZip.entries
+        // transformEntries(zipEntries, tacit)
+      } else if (file.type === 'application/zip') {
+        // zip file
+        const fileName = file.name
+        let zipFilesystem = zips.get(fileName)
+
+        if (!zipFilesystem) {
+          zips.set(fileName, createZipFileSystem())
+          zipFilesystem = zips.get(fileName)
+        } else {
+          console.warn(`${fileName} is alreay exist!`)
+          return
+        }
+        // @ts-ignore
+        const zipEntries = await zipFilesystem.importBlob(file)
+        // transformEntries(zipEntries, fileName)
+        reslove({ rfn: fileName, id: 0 })
+      } else {
+        console.warn(`不支持的文件格式：${file.name}`)
+        reject(false)
+      }
+    })
+  })
+  console.log(fileHandleingList)
+  return Promise.allSettled(fileHandleingList)
+}
+
+function transformEntries(zipEntries: any, rootFileName: string) {
+  const fileList = zipEntries
+    .map((entriy: any) => {
+      // const uid = uId()
+      let status = Status.compressing
+      const type = entriy.data?.type || getMimeType(entriy.name)
+      const isSpportTye = support.includes(type)
+      if (!isSpportTye) {
+        status = Status.unsupport
+      }
+      return {
+        uid: buildUid(rootFileName, entriy.id),
+        id: entriy.id,
+        pid: entriy.parent?.id,
+        directory: entriy.directory || false,
+        rfn: rootFileName,
+        name: entriy.name,
+        type,
+        status,
+        rawSize: entriy.data?.size || entriy.uncompressedSize,
+        rawData: null,
+        resultSize: 0,
+        resultData: null
+      }
+    })
+    .filter((item: any) => {
+      const isOSFile = ['__MACOSX', '.DS_Store'].includes(item.name)
+      return !isOSFile && (!item.name || !item.name?.startsWith('.'))
+    })
+  console.log(fileList)
+  const tree = buildTree(fileList)
+  return tree
+}
+interface Item {
+  status: string
+  value: AddedFile
+}
+
+function getUniqueRfnValues(data: PromiseSettledResult<AddedFile>[]): string[] {
+  const rfnSet = new Set<string>()
+
+  data.forEach(item => {
+    if (item.status === 'fulfilled' && item.value && item.value.rfn) {
+      rfnSet.add(item.value.rfn)
+    }
+  })
+
+  return Array.from(rfnSet)
+}
+
+function getFileFromZipById(addedFiles: AddedFile[]) {
+  addedFiles.forEach(({ rfn, id }) => {
+    const zip = zips.get(rfn)
+    if (!zip) return
+    if (rfn === tacit) {
+      const imgEntry = zip.getById(id)
+      imgEntry
+        // @ts-ignore
+        ?.getUint8Array()
+        .then((img: any) => {
+          compress(img, buildUid(rfn, id))
+        })
+        .catch(error => {
+          console.log(error)
+        })
+    } else {
+      // zip package
+      // @ts-ignore
+      const imgEntryInZip = zip.entries.filter(entry => {
+        console.log(entry.name)
+        return (
+          !entry.directory &&
+          !['__MACOSX', '.DS_Store'].includes(entry.name) &&
+          // hidden file
+          !entry.name.startsWith('.') &&
+          getMimeType(entry.name).includes('image/')
+        )
+      })
+      imgEntryInZip.forEach(imgEntry => {
+        // @ts-ignore
+        imgEntry
+          ?.getUint8Array()
+          .then(img => {
+            // console.log(img)
+            compress(img, buildUid(rfn, imgEntry.id))
+          })
+          .catch(error => {
+            console.log(error)
+          })
+      })
+      console.log(imgEntryInZip)
+    }
+  })
+}
+
+async function handleFiles(files: FileList) {
+  try {
+    const addedFiles = await handleZip(files)
+    console.log(addedFiles)
+    const rfns = getUniqueRfnValues(addedFiles)
+
+    rfns.forEach(rfn => {
+      const zip = zips.get(rfn)
+      if (!zip) return
+      // @ts-ignore
+      const tree = transformEntries(zip.entries, rfn)
+      console.log(tree)
+      addImages(tree[0])
+    })
+    const fileList = addedFiles.map(({ value }) => {
+      return value
+    })
+    getFileFromZipById(fileList)
+
+    /* let list: any[] = []
+    zips.forEach((value, key) => {
+      console.log(`${String(key)}: `, value)
+      
+      const tree = transformEntries(value.entries, key)
+      Array.prototype.push.apply(list, tree)
+      console.log(list)
+    }) */
+  } catch (error) {
+    console.warn(error)
+    return
+  }
+  return
+  // todo handle zip files
+  const fileInfos = Array.from(files)
     .filter(file => file.type.startsWith('image/'))
     .map(file => {
       // console.log(file)
-      const id = uId()
-      compress(file, id)
+      const uid = uId()
+      compress(file, uid)
 
       return {
-        id,
+        uid,
         name: file.name,
         type: file.type,
         status: Status.compressing,
@@ -150,9 +273,9 @@ function handleFiles(files: any) {
       }
     })
   addImages(fileInfos)
-  // uploadFiles.value.push(...fileInfos)
 }
 
+const manager = new WorkerManager(3)
 function compress(file: File, id: string) {
   manager
     .compress(file)
@@ -161,6 +284,7 @@ function compress(file: File, id: string) {
       const resultSize = imgData.size()
 
       const updateData = {
+        rawData: file,
         resultSize,
         resultData,
         status: Status.success
@@ -175,6 +299,9 @@ function compress(file: File, id: string) {
       updateImage(id, updateData)
     })
 }
+onBeforeUnmount(() => {
+  manager.kill()
+})
 </script>
 
 <template>
@@ -192,7 +319,9 @@ function compress(file: File, id: string) {
         @change="fileChange" />
       <p class="flex flex-col">
         <span class="text-lg font-bold pb-1">Drop your images here!</span>
-        <span class="text-gray-500">Convert images automatically</span>
+        <span class="text-gray-500"
+          >Compression happens on your device, no data is sent to our servers</span
+        >
       </p>
     </button>
   </div>

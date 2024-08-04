@@ -5,6 +5,7 @@ import { Status } from '@/components/index.d'
 import { useImageStore } from '@/stores/image'
 import Result from '@/components/Result.vue'
 import DropBox from '@/components/DropBox.vue'
+import Tree from '@/components/Tree/Index.vue'
 
 const store = useImageStore()
 const { clearImages } = store
@@ -80,12 +81,18 @@ async function downloadAll() {
         </button>
       </div>
     </section>
-    <section class="pb-10">
+    <!-- <section class="pb-10">
       <ul class="container divide-y divide-slate-200 dark:divide-stone-700 p-3">
         <li class="first:pt-0 last:pb-0 py-3" v-for="data in store.images">
           <Result :data="data"></Result>
         </li>
       </ul>
+    </section> -->
+
+    <section class="pb-10">
+      <div class="container">
+        <Tree :treeData="store.images"></Tree>
+      </div>
     </section>
   </main>
 </template>

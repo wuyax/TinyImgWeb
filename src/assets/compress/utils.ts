@@ -1,6 +1,6 @@
 import { BlobReader, ZipReader, type Entry, type GetEntriesOptions } from '@zip.js/zip.js'
 
-export const support = ['jpg', 'jpeg', 'png', 'webp']
+export const support = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp']
 
 /**
  * 获取图片的 mime
